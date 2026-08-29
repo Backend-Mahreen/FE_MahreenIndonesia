@@ -6,8 +6,7 @@ import type {
 } from "../../pages/DashboardAdmin/types";
 import { readStudioOrders } from "../../pages/Mahreen-Studio/Purchase/storage";
 import { campaignRepository, formatCampaignCompactCurrency } from "../campaign/campaignRepository";
-import { readLocalCSRApplications } from "../csr/csrApplicationService";
-import { readLocalInternshipApplications } from "../internship/internshipService";
+
 import { serviceManagementRepository } from "../serviceManagement/serviceManagementRepository";
 import { subscribeToPlatformData } from "../storage/browserStorage";
 import { userDirectoryRepository } from "../userDirectory/userDirectoryRepository";
@@ -71,8 +70,8 @@ const getOverviewSnapshot = (): AdminOverviewSnapshot => {
   const studioOrders = readStudioOrders();
   const campaigns = campaignRepository.getSnapshot();
   const csr = adminEcosystemRepository.getCsrSnapshot();
-  const internships = readLocalInternshipApplications();
-  const csrApplications = readLocalCSRApplications();
+  const internships: never[] = [];
+  const csrApplications: never[] = [];
   const metrics: AdminMetric[] = [
     {
       label: "Local Revenue",

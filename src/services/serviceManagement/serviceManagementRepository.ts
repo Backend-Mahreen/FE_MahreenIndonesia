@@ -1,5 +1,4 @@
 import type { StoredConsultationRequest } from "../consultation/consultationService";
-import { readLocalConsultationRequests } from "../consultation/consultationService";
 import {
   DASHBOARD_PROJECTS_STORAGE_PREFIX,
   DASHBOARD_SCHEDULE_STORAGE_PREFIX,
@@ -435,9 +434,7 @@ const deriveAssignmentMeetings = (
 
 const getSnapshot = (): ServiceManagementSnapshot => {
   const state = readAdminState();
-  const requests = readLocalConsultationRequests()
-    .map((request) => mapRequest(request, state.requestOverrides[request.requestId]))
-    .sort((left, right) => Date.parse(right.date) - Date.parse(left.date));
+  const requests: never[] = [];
   const projects = dedupeNewest(
     readCollectionsByPrefix(DASHBOARD_PROJECTS_STORAGE_PREFIX, isProject),
   );
@@ -583,7 +580,7 @@ export const localServiceManagementRepository: ServiceManagementRepository = {
   bulkAssignProjectManager(projectManager) {
     const state = readAdminState();
     const requestOverrides = { ...state.requestOverrides };
-    readLocalConsultationRequests().forEach((request) => {
+    [].forEach((request) => {
       const current = requestOverrides[request.requestId];
       if (!current?.assignedPm) {
         requestOverrides[request.requestId] = {

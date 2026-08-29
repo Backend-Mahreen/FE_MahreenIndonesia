@@ -1,6 +1,4 @@
 import { campaignRepository } from "../campaign/campaignRepository";
-import { readLocalCSRApplications } from "../csr/csrApplicationService";
-import { readLocalInternshipApplications } from "../internship/internshipService";
 import {
   emitPlatformDataChange,
   subscribeToPlatformData,
@@ -116,6 +114,7 @@ export interface AdminEcosystemRepository {
   getStudioSnapshot(): StudioAdminSnapshot;
   getInternshipSnapshot(): InternshipAdminSnapshot;
   saveStudioProduct(product: NewStudioProduct): StudioProductRecord;
+  updateStudioProduct(id: string, patch: Partial<NewStudioProduct>): StudioProductRecord;
   removeStudioProduct(id: string): void;
   subscribe(listener: () => void): () => void;
 }
@@ -215,7 +214,7 @@ const getProductStatus = (stock: number, threshold: number): StudioProductStatus
 };
 
 const getCsrSnapshot = (): CsrAdminSnapshot => {
-  const applications = readLocalCSRApplications();
+  const applications: never[] = [];
   const campaignSnapshot = campaignRepository.getSnapshot();
   const sectors = ["Education", "Environment", "Tech Empowerment", "Healthcare"];
   const sectorCounts = new Map(sectors.map((sector) => [sector, 0]));
@@ -282,7 +281,7 @@ const getStudioSnapshot = (): StudioAdminSnapshot => {
 };
 
 const getInternshipSnapshot = (): InternshipAdminSnapshot => {
-  const applications = readLocalInternshipApplications();
+  const applications: never[] = [];
   const monthLabels = ["Jan", "Mar", "May", "Jul", "Sep", "Nov"];
   const monthIndexes = [0, 2, 4, 6, 8, 10];
   const groupedPrograms = new Map<string, number>();
@@ -349,6 +348,29 @@ export const localAdminEcosystemRepository: AdminEcosystemRepository = {
     })) {
       throw new Error("Penyimpanan lokal Admin tidak tersedia.");
     }
+  },
+  updateStudioProduct(id, patch) {
+    const state = readEcosystem();
+    const product = state.studio.products.find((p) => p.id === id);
+    if (!product) throw new Error("Produk tidak ditemukan.");
+    const updated: StudioProductRecord = {
+      ...product,
+      ...patch,
+      status: getProductStatus(
+        patch.stock ?? product.stock,
+        patch.lowStockThreshold ?? product.lowStockThreshold,
+      ),
+    };
+    if (!writeEcosystem({
+      ...state,
+      studio: {
+        ...state.studio,
+        products: state.studio.products.map((p) => (p.id === id ? updated : p)),
+      },
+    })) {
+      throw new Error("Penyimpanan lokal Admin tidak tersedia.");
+    }
+    return updated;
   },
   subscribe(listener) {
     if (typeof window === "undefined") return () => undefined;

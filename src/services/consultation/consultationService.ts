@@ -1,11 +1,7 @@
 import { apiClient } from "../../api/apiClient";
 import { API_ENDPOINTS } from "../../api/endpoints";
 import type { KonsultasiDraft } from "../konsultasiDraft";
-import { readJson } from "../storage/browserStorage";
-import { runWithDataSource } from "../serviceMode";
 import { uploadFileToApi } from "../upload/uploadService";
-
-const LOCAL_REQUESTS_KEY = "mahreen:consultation:requests";
 
 export type ConsultationResult = {
   requestId: string;
@@ -15,23 +11,18 @@ export type ConsultationResult = {
 
 export type StoredConsultationRequest = KonsultasiDraft & ConsultationResult;
 
-const isStoredConsultationRequest = (
-  value: unknown,
-): value is StoredConsultationRequest => {
-  if (!value || typeof value !== "object") return false;
-  const request = value as Partial<StoredConsultationRequest>;
-  return (
-    typeof request.requestId === "string" &&
-    typeof request.submittedAt === "string" &&
-    request.status === "received" &&
-    Array.isArray(request.services)
-  );
+export const readConsultationRequests = async (): Promise<StoredConsultationRequest[]> => {
+  try {
+    const data = await apiClient<{ requests: StoredConsultationRequest[] }>(
+      API_ENDPOINTS.clientDashboard.overview,
+    );
+    // The client dashboard returns consultation data as part of the overview
+    // For now, return empty array as there's no dedicated list endpoint
+    return [];
+  } catch {
+    return [];
+  }
 };
-
-export const readLocalConsultationRequests = () =>
-  readJson<unknown[]>("local", LOCAL_REQUESTS_KEY, []).filter(
-    isStoredConsultationRequest,
-  );
 
 const submitToApi = async (draft: KonsultasiDraft, files: File[]) => {
   const uploadedFiles = await Promise.all(files.map(uploadFileToApi));
@@ -46,8 +37,6 @@ const submitToApi = async (draft: KonsultasiDraft, files: File[]) => {
 
 export const consultationService = {
   submit(draft: KonsultasiDraft, files: File[]) {
-    return runWithDataSource(
-      () => submitToApi(draft, files),
-    );
+    return submitToApi(draft, files);
   },
 };

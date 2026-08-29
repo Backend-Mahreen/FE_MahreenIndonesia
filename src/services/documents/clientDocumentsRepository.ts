@@ -90,23 +90,9 @@ const readDocuments = (accountId: string) => {
   return seeded;
 };
 
-export const clientDocumentsRepository = {
-  getSnapshot(accountId: string) {
-    return cloneDocuments(readDocuments(accountId)).sort(
-      (left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt),
-    );
-  },
+import { apiClientDocumentsRepository } from "./apiClientDocumentsRepository";
 
-  reset(accountId: string) {
-    const documents = cloneDocuments(seedDocuments);
-    writeJson("local", getStorageKey(accountId), documents);
-    return documents;
-  },
-
-  subscribe(listener: () => void) {
-    return subscribeToPlatformData(listener);
-  },
-};
+export const clientDocumentsRepository = apiClientDocumentsRepository;
 
 const escapeXml = (value: string) =>
   value
